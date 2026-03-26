@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Project Status - Plansman Inc</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: "Helvetica Neue", Arial, sans-serif; color: #2c3e50; background: transparent; }
+.ps-wrap { max-width: 700px; margin: 0 auto; padding: 20px; }
+.ps-sub { text-align: center; color: #888; font-size: 14px; margin-bottom: 24px; }
+.ps-srch { display: flex; gap: 8px; margin-bottom: 24px; }
+.ps-srch input {
+  flex: 1; padding: 12px 14px; font-size: 16px;
+  border: 2px solid #ddd; border-radius: 8px; outline: none; font-family: inherit;
+}
+.ps-srch input:focus { border-color: #2c5f8a; }
+.ps-srch button {
+  padding: 12px 24px; font-size: 15px; font-weight: 600;
+  background: #2c5f8a; color: #fff; border: none; border-radius: 8px;
+  cursor: pointer; font-family: inherit;
+}
+.ps-srch button:hover { background: #1e4263; }
+.ps-err { text-align: center; color: #c0392b; padding: 20px; font-size: 15px; }
+.ps-card {
+  background: #fff; border: 1px solid #e0e0e0; border-radius: 12px;
+  padding: 20px; margin-bottom: 16px; box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+}
+.ps-card-top {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  margin-bottom: 12px; flex-wrap: wrap; gap: 6px;
+}
+.ps-addr { font-size: 17px; font-weight: 600; color: #1a1a2e; }
+.ps-badge {
+  display: inline-block; padding: 3px 10px; border-radius: 16px;
+  font-size: 12px; font-weight: 600;
+}
+.ps-due { font-size: 13px; color: #666; margin-bottom: 12px; }
+.ps-due strong { color: #333; }
+.ps-notes {
+  font-size: 13px; color: #555; line-height: 1.5;
+  padding: 10px; background: #f8f9fa; border-radius: 6px; margin-bottom: 14px;
+}
+.ps-tl-bar {
+  height: 7px; border-radius: 4px; background: #e9ecef;
+  margin-bottom: 6px; overflow: hidden;
+}
+.ps-tl-fill {
+  height: 100%; border-radius: 4px;
+  background: linear-gradient(90deg, #2c5f8a, #4a90c4);
+}
+.ps-tl-labels { display: flex; justify-content: space-between; font-size: 10px; color: #bbb; }
+.ps-tl-labels .cur { color: #2c5f8a; font-weight: 700; }
+.ps-tl-labels .done { color: #888; }
+.ps-ftr { text-align: center; font-size: 11px; color: #bbb; margin-top: 24px; }
+</style>
+</head>
+<body>
+<div class="ps-wrap">
+  <p class="ps-sub">Enter your street name to check your project status</p>
+  <form class="ps-srch" onsubmit="psLookup(event)">
+    <input type="text" id="ps-input" placeholder="e.g. Trojan, Sunfield, De Anza..." autofocus>
+    <button type="submit">Look Up</button>
+  </form>
+  <div id="ps-results"></div>
+  <div class="ps-ftr">Updated automatically &bull; Contact us at projects@plansman.com for questions</div>
+</div>
+
+<script>
+var PS_API = "https://script.google.com/macros/s/AKfycbyiWjEZqhWdcNMSSDuPYbIIdMICflFM-3hpZWfI1ATizpZ0M7hzVS_ilI9Pbm-f-hLx/exec";
+var PH = ["In Design","Client Review","Const. Docs","Submitted","Plancheck","Backcheck","Resubmitted","Approved","Construction","Complete"];
+var SH = ["Design","Review","Docs","Submitted","Plancheck","Backcheck","Resubmitted","Approved","Construction","Complete"];
+
+function psLookup(e) {
+  e.preventDefault();
+  var s = document.getElementById("ps-input").value.trim().toLowerCase();
+  var el = document.getElementById("ps-results");
+  if (s.length < 3) {
+    el.innerHTML = '<p class="ps-err">Please enter at least 3 characters.</p>';
+    return;
+  }
+  el.innerHTML = '<p style="text-align:center;color:#888">Searching...</p>';
+  fetch(PS_API + "?street=" + encodeURIComponent(s), { redirect: "follow" })
+    .then(function(r) { return r.json(); })
+    .then(function(d) { psShow(d); })
+    .catch(function() {
+      el.innerHTML = '<p class="ps-err">Unable to load data. Please try again.</p>';
+    });
+}
+
+function psShow(d) {
+  var el = document.getElementById("ps-results");
+  if (d.error) { el.innerHTML = '<p class="ps-err">' + psEsc(d.error) + '</p>'; return; }
+  if (!d.projects || !d.projects.length) { el.innerHTML = '<p class="ps-err">No projects found.</p>'; return; }
+  var h = "";
+  for (var i = 0; i < d.projects.length; i++) h += psCard(d.projects[i]);
+  el.innerHTML = h;
+}
+
+function psCard(p) {
+  var idx = PH.indexOf(p.status);
+  if (idx < 0) idx = 0;
+  var pct = Math.round(((idx + 1) / PH.length) * 100);
+
+  var bc = "#2c5f8a", bg = "#e8f4fd";
+  if (p.status === "Approved" || p.status === "Construction") { bc = "#27763a"; bg = "#e8f8e8"; }
+  if (p.status === "Client Review" || p.status === "Backcheck") { bc = "#b86e00"; bg = "#fff3e0"; }
+  if (p.status === "Complete") { bc = "#555"; bg = "#f0f0f0"; }
+
+  var due = (p.due_date || "").toString();
+  if (due.indexOf("GMT") !== -1) {
+    var dd = new Date(due);
+    if (!isNaN(dd)) due = (dd.getMonth()+1) + "/" + dd.getDate() + "/" + dd.getFullYear();
+  }
+
+  var h = '<div class="ps-card"><div class="ps-card-top">';
+  h += '<div class="ps-addr">' + psEsc(p.address) + '</div>';
+  h += '<span class="ps-badge" style="background:' + bg + ';color:' + bc + '">' + psEsc(p.status) + '</span></div>';
+  if (due) h += '<div class="ps-due">Estimated next milestone: <strong>' + psEsc(due) + '</strong></div>';
+  if (p.notes) h += '<div class="ps-notes">' + psEsc(p.notes) + '</div>';
+  h += '<div class="ps-tl-bar"><div class="ps-tl-fill" style="width:' + pct + '%"></div></div>';
+  h += '<div class="ps-tl-labels">';
+  for (var i = 0; i < PH.length; i++) {
+    var cls = "";
+    if (i === idx) cls = "cur";
+    else if (i < idx) cls = "done";
+    if (i === 0 || i === idx || i === PH.length - 1)
+      h += '<span class="' + cls + '">' + SH[i] + '</span>';
+    else
+      h += '<span></span>';
+  }
+  h += '</div></div>';
+  return h;
+}
+
+function psEsc(s) {
+  var d = document.createElement("div");
+  d.textContent = s || "";
+  return d.innerHTML;
+}
+</script>
+</body>
+</html>
