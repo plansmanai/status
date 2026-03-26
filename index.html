@@ -80,6 +80,19 @@ body { font-family: "Helvetica Neue", Arial, sans-serif; color: #2c3e50; backgro
 .ps-step.active .ps-connector { top: 9px; }
 .ps-step.done .ps-connector { background: #4a90c4; }
 .ps-step:last-child .ps-connector { display: none; }
+.ps-tooltip {
+  display: none; position: absolute; bottom: calc(100% + 12px); left: 50%;
+  transform: translateX(-50%); background: #1a1a2e; color: #fff;
+  padding: 8px 12px; border-radius: 8px; font-size: 12px; line-height: 1.4;
+  width: 200px; text-align: center; z-index: 10;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+.ps-tooltip::after {
+  content: ""; position: absolute; top: 100%; left: 50%;
+  transform: translateX(-50%); border: 6px solid transparent;
+  border-top-color: #1a1a2e;
+}
+.ps-step:hover .ps-tooltip { display: block; }
 .ps-ftr { text-align: center; font-size: 12px; color: #bbb; margin-top: 28px; }
 </style>
 </head>
@@ -98,6 +111,18 @@ body { font-family: "Helvetica Neue", Arial, sans-serif; color: #2c3e50; backgro
 var PS_API = "https://script.google.com/macros/s/AKfycbyiWjEZqhWdcNMSSDuPYbIIdMICflFM-3hpZWfI1ATizpZ0M7hzVS_ilI9Pbm-f-hLx/exec";
 var PH = ["In Design","Client Review","Const. Docs","Submitted","Plancheck","Backcheck","Resubmitted","Approved","Construction","Complete"];
 var SH = ["In Design","Client Review","Const. Docs.","Submitted","Backcheck","Resubmitted","Approved","Construction","Revision","Complete"];
+var TIPS = [
+  "Your project is being designed and drafted by our team.",
+  "Plans have been sent to you for review, comments, or approval.",
+  "Design is approved — we're preparing final construction documents.",
+  "Plans have been submitted to the city for plan check review.",
+  "The city has returned comments or corrections for us to address.",
+  "Revised plans have been resubmitted to the city for re-review.",
+  "Plans are approved by the city — permit is ready or issued.",
+  "Project is under construction with approved plans.",
+  "Post-approval revisions are being processed.",
+  "Project is complete — all approvals and inspections are finalized."
+];
 
 function psLookup(e) {
   e.preventDefault();
@@ -155,6 +180,7 @@ function psCard(p) {
     if (i === PH.length - 1) cls += " complete-phase";
     h += '<div class="' + cls + '">';
     h += '<div class="ps-connector"></div>';
+    h += '<div class="ps-tooltip">' + TIPS[i] + '</div>';
     h += '<div class="ps-dot"></div>';
     h += '<div class="ps-step-label">' + SH[i] + '</div>';
     h += '</div>';
