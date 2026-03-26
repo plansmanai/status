@@ -32,10 +32,11 @@ body { font-family: "Helvetica Neue", Arial, sans-serif; color: #2c3e50; backgro
 }
 .ps-addr { font-size: 20px; font-weight: 700; color: #1a1a2e; }
 .ps-phase-group { display: flex; align-items: center; gap: 8px; }
-.ps-phase-label { font-size: 12px; font-weight: 600; color: #999; text-transform: uppercase; letter-spacing: 0.5px; }
+.ps-phase-label { font-size: 13px; font-weight: 700; color: #777; text-transform: uppercase; letter-spacing: 0.5px; }
 .ps-badge {
-  display: inline-block; padding: 6px 16px; border-radius: 20px;
-  font-size: 14px; font-weight: 700; letter-spacing: 0.3px;
+  display: inline-block; padding: 8px 20px; border-radius: 22px;
+  font-size: 16px; font-weight: 700; letter-spacing: 0.3px;
+  border: 2px solid currentColor;
 }
 .ps-status-row { font-size: 15px; color: #555; margin-bottom: 6px; }
 .ps-status-row strong { color: #333; }
@@ -145,8 +146,7 @@ function psCard(p) {
   h += '<div class="ps-phase-group"><span class="ps-phase-label">Phase</span>';
   h += '<span class="ps-badge" style="background:' + bg + ';color:' + bc + '">' + psEsc(displayStatus) + '</span></div></div>';
   if (due) h += '<div class="ps-due">Estimated next milestone: <strong>' + psEsc(due) + '</strong></div>';
-  if (p.notes) h += '<div class="ps-notes">' + psEsc(p.notes) + '</div>';
-  h += '<div class="ps-status-row">STATUS: <strong>' + psEsc(displayStatus) + '</strong></div>';
+  if (p.notes) h += '<div class="ps-status-row">STATUS:</div><div class="ps-notes">' + psEsc(p.notes) + '</div>';
   h += '<div class="ps-timeline">';
   for (var i = 0; i < PH.length; i++) {
     var cls = "ps-step";
