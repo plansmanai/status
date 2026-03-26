@@ -145,7 +145,7 @@ function psCard(p) {
   h += '<div class="ps-addr">' + psEsc(p.address) + '</div>';
   h += '<div class="ps-phase-group"><span class="ps-phase-label">Phase</span>';
   h += '<span class="ps-badge" style="background:' + bg + ';color:' + bc + '">' + psEsc(displayStatus) + '</span></div></div>';
-  if (due) h += '<div class="ps-due">Estimated next milestone: <strong>' + psEsc(due) + '</strong></div>';
+  if (due) h += '<div class="ps-due"><strong>Estimated next milestone: ' + psEsc(due) + '</strong></div>';
   if (p.notes) h += '<div class="ps-status-row">STATUS:</div><div class="ps-notes">' + psEsc(p.notes) + '</div>';
   h += '<div class="ps-timeline">';
   for (var i = 0; i < PH.length; i++) {
