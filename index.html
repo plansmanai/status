@@ -7,71 +7,79 @@
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: "Helvetica Neue", Arial, sans-serif; color: #2c3e50; background: transparent; }
-.ps-wrap { max-width: 700px; margin: 0 auto; padding: 20px; }
-.ps-sub { text-align: center; color: #888; font-size: 14px; margin-bottom: 24px; }
-.ps-srch { display: flex; gap: 8px; margin-bottom: 24px; }
+.ps-wrap { max-width: 800px; margin: 0 auto; padding: 24px; }
+.ps-sub { text-align: center; color: #888; font-size: 16px; margin-bottom: 28px; }
+.ps-srch { display: flex; gap: 10px; margin-bottom: 28px; }
 .ps-srch input {
-  flex: 1; padding: 12px 14px; font-size: 16px;
+  flex: 1; padding: 14px 16px; font-size: 18px;
   border: 2px solid #ddd; border-radius: 8px; outline: none; font-family: inherit;
 }
 .ps-srch input:focus { border-color: #2c5f8a; }
 .ps-srch button {
-  padding: 12px 24px; font-size: 15px; font-weight: 600;
+  padding: 14px 28px; font-size: 17px; font-weight: 600;
   background: #2c5f8a; color: #fff; border: none; border-radius: 8px;
   cursor: pointer; font-family: inherit;
 }
 .ps-srch button:hover { background: #1e4263; }
-.ps-err { text-align: center; color: #c0392b; padding: 20px; font-size: 15px; }
+.ps-err { text-align: center; color: #c0392b; padding: 24px; font-size: 17px; }
 .ps-card {
-  background: #fff; border: 1px solid #e0e0e0; border-radius: 12px;
-  padding: 20px; margin-bottom: 16px; box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+  background: #fff; border: 1px solid #e0e0e0; border-radius: 14px;
+  padding: 24px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06);
 }
 .ps-card-top {
-  display: flex; justify-content: space-between; align-items: flex-start;
-  margin-bottom: 12px; flex-wrap: wrap; gap: 6px;
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 14px; flex-wrap: wrap; gap: 10px;
 }
-.ps-addr { font-size: 17px; font-weight: 600; color: #1a1a2e; }
+.ps-addr { font-size: 20px; font-weight: 700; color: #1a1a2e; }
+.ps-phase-group { display: flex; align-items: center; gap: 8px; }
+.ps-phase-label { font-size: 12px; font-weight: 600; color: #999; text-transform: uppercase; letter-spacing: 0.5px; }
 .ps-badge {
-  display: inline-block; padding: 3px 10px; border-radius: 16px;
-  font-size: 12px; font-weight: 600;
+  display: inline-block; padding: 6px 16px; border-radius: 20px;
+  font-size: 14px; font-weight: 700; letter-spacing: 0.3px;
 }
-.ps-due { font-size: 13px; color: #666; margin-bottom: 12px; }
+.ps-status-row { font-size: 15px; color: #555; margin-bottom: 6px; }
+.ps-status-row strong { color: #333; }
+.ps-due { font-size: 15px; color: #666; margin-bottom: 14px; }
 .ps-due strong { color: #333; }
 .ps-notes {
-  font-size: 13px; color: #555; line-height: 1.5;
-  padding: 10px; background: #f8f9fa; border-radius: 6px; margin-bottom: 14px;
+  font-size: 15px; color: #555; line-height: 1.6;
+  padding: 12px; background: #f8f9fa; border-radius: 8px; margin-bottom: 16px;
 }
-.ps-timeline { display: flex; align-items: flex-start; margin-top: 16px; position: relative; }
+.ps-tl-header {
+  font-size: 11px; font-weight: 600; color: #999; text-transform: uppercase;
+  letter-spacing: 0.5px; margin-bottom: 10px; margin-top: 20px;
+}
+.ps-timeline { display: flex; align-items: flex-start; position: relative; }
 .ps-step { flex: 1; display: flex; flex-direction: column; align-items: center; position: relative; }
 .ps-dot {
-  width: 14px; height: 14px; border-radius: 50%; border: 2px solid #ddd;
+  width: 16px; height: 16px; border-radius: 50%; border: 2px solid #ddd;
   background: #fff; z-index: 1; position: relative;
 }
 .ps-step.done .ps-dot { background: #4a90c4; border-color: #4a90c4; }
 .ps-step.active .ps-dot {
   background: #2c5f8a; border-color: #2c5f8a;
-  box-shadow: 0 0 0 4px rgba(44,95,138,0.2);
-  width: 18px; height: 18px;
+  box-shadow: 0 0 0 5px rgba(44,95,138,0.2);
+  width: 20px; height: 20px;
 }
 .ps-step.complete-phase .ps-dot { background: #27763a; border-color: #27763a; }
 .ps-step.complete-phase.active .ps-dot {
-  box-shadow: 0 0 0 4px rgba(39,118,58,0.2);
+  box-shadow: 0 0 0 5px rgba(39,118,58,0.2);
 }
 .ps-step-label {
-  font-size: 9px; color: #bbb; margin-top: 6px; text-align: center;
-  line-height: 1.2; max-width: 60px;
+  font-size: 10px; color: #bbb; margin-top: 8px; text-align: center;
+  line-height: 1.2; max-width: 65px;
 }
 .ps-step.done .ps-step-label { color: #888; }
-.ps-step.active .ps-step-label { color: #2c5f8a; font-weight: 700; font-size: 10px; }
+.ps-step.active .ps-step-label { color: #2c5f8a; font-weight: 700; font-size: 11px; }
 .ps-step.complete-phase.active .ps-step-label { color: #27763a; }
 .ps-connector {
   position: absolute; top: 7px; left: 50%; width: 100%; height: 3px;
   background: #e9ecef; z-index: 0;
 }
-.ps-step.active .ps-connector { top: 8px; }
+.ps-step.active .ps-connector { top: 9px; }
 .ps-step.done .ps-connector { background: #4a90c4; }
 .ps-step:last-child .ps-connector { display: none; }
-.ps-ftr { text-align: center; font-size: 11px; color: #bbb; margin-top: 24px; }
+.ps-ftr { text-align: center; font-size: 12px; color: #bbb; margin-top: 28px; }
 </style>
 </head>
 <body>
@@ -88,7 +96,7 @@ body { font-family: "Helvetica Neue", Arial, sans-serif; color: #2c3e50; backgro
 <script>
 var PS_API = "https://script.google.com/macros/s/AKfycbyiWjEZqhWdcNMSSDuPYbIIdMICflFM-3hpZWfI1ATizpZ0M7hzVS_ilI9Pbm-f-hLx/exec";
 var PH = ["In Design","Client Review","Const. Docs","Submitted","Plancheck","Backcheck","Resubmitted","Approved","Construction","Complete"];
-var SH = ["Design","Review","Docs","Submitted","Plancheck","Backcheck","Resubmitted","Approved","Construction","Complete"];
+var SH = ["In Design","Client Review","Const. Docs","Submitted","In Plancheck","Backcheck","Resubmitted","Permitted","Construction","Complete"];
 
 function psLookup(e) {
   e.preventDefault();
@@ -98,7 +106,7 @@ function psLookup(e) {
     el.innerHTML = '<p class="ps-err">Please enter at least 3 characters.</p>';
     return;
   }
-  el.innerHTML = '<p style="text-align:center;color:#888">Searching...</p>';
+  el.innerHTML = '<p style="text-align:center;color:#888;font-size:16px">Searching...</p>';
   fetch(PS_API + "?street=" + encodeURIComponent(s), { redirect: "follow" })
     .then(function(r) { return r.json(); })
     .then(function(d) { psShow(d); })
@@ -119,6 +127,7 @@ function psShow(d) {
 function psCard(p) {
   var idx = PH.indexOf(p.status);
   if (idx < 0) idx = 0;
+  var displayStatus = SH[idx] || p.status;
 
   var bc = "#2c5f8a", bg = "#e8f4fd";
   if (p.status === "Approved" || p.status === "Construction") { bc = "#27763a"; bg = "#e8f8e8"; }
@@ -133,9 +142,12 @@ function psCard(p) {
 
   var h = '<div class="ps-card"><div class="ps-card-top">';
   h += '<div class="ps-addr">' + psEsc(p.address) + '</div>';
-  h += '<span class="ps-badge" style="background:' + bg + ';color:' + bc + '">' + psEsc(p.status) + '</span></div>';
+  h += '<div class="ps-phase-group"><span class="ps-phase-label">Phase</span>';
+  h += '<span class="ps-badge" style="background:' + bg + ';color:' + bc + '">' + psEsc(displayStatus) + '</span></div></div>';
+  h += '<div class="ps-status-row">STATUS: <strong>' + psEsc(displayStatus) + '</strong></div>';
   if (due) h += '<div class="ps-due">Estimated next milestone: <strong>' + psEsc(due) + '</strong></div>';
   if (p.notes) h += '<div class="ps-notes">' + psEsc(p.notes) + '</div>';
+  h += '<div class="ps-tl-header">Phase Timeline</div>';
   h += '<div class="ps-timeline">';
   for (var i = 0; i < PH.length; i++) {
     var cls = "ps-step";
