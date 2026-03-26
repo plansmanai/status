@@ -152,7 +152,7 @@ function psCard(p) {
     var cls = "ps-step";
     if (i < idx) cls += " done";
     if (i === idx) cls += " active";
-    if (i >= PH.length - 2) cls += " complete-phase";
+    if (i === PH.length - 1) cls += " complete-phase";
     h += '<div class="' + cls + '">';
     h += '<div class="ps-connector"></div>';
     h += '<div class="ps-dot"></div>';
