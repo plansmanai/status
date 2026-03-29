@@ -124,6 +124,10 @@ body { font-family: "Helvetica Neue", Arial, sans-serif; color: #2c3e50; backgro
 </div>
 
 <script>
+// Supabase config (anon key is safe for client-side — RLS protects the data)
+var SB_URL = "https://kwcoqoizrwqxpfrkwkfv.supabase.co";
+var SB_KEY = "sb_publishable_-cH1zcGpj-JJ_zd0_gSf9A_vOpqgBmn";
+// Fallback to Apps Script if Supabase doesn't have client_status yet
 var PS_API = "https://script.google.com/macros/s/AKfycbyYmK__PccJooJcQkIK8BzJIfBkuAQ42Rd5hsaeM7btd4no4oGUnCHFA5TJog6Qmq9J/exec";
 var PH = ["In Design","Client Review","Const. Docs","Submitted","Plancheck","Backcheck","Resubmitted","Approved","Construction","Complete"];
 var SH = ["In Design","Client Review","Const. Docs.","Submitted","In Plancheck","Backcheck","Resubmitted","Approved","Construction","Complete"];
@@ -149,12 +153,49 @@ function psLookup(e) {
     return;
   }
   el.innerHTML = '<p style="text-align:center;color:#888;font-size:16px">Searching...</p>';
+
+  // Try Supabase first (fast, has client-facing status)
+  fetch(SB_URL + "/rest/v1/projects?address=ilike.%25" + encodeURIComponent(s) + "%25&current_phase=neq.&select=proj_no,address,current_phase,due_date,client_status,jake_status", {
+    headers: { "apikey": SB_KEY, "Authorization": "Bearer " + SB_KEY }
+  })
+    .then(function(r) { return r.json(); })
+    .then(function(rows) {
+      if (rows && rows.length > 0) {
+        // Filter out completed/blank
+        var active = rows.filter(function(r) { return r.current_phase && r.current_phase !== "Complete"; });
+        if (active.length > 0) {
+          psShowSB(active);
+          return;
+        }
+      }
+      // Fallback to Apps Script
+      psFallback(s);
+    })
+    .catch(function() { psFallback(s); });
+}
+
+function psFallback(s) {
   fetch(PS_API + "?street=" + encodeURIComponent(s), { redirect: "follow" })
     .then(function(r) { return r.json(); })
     .then(function(d) { psShow(d); })
     .catch(function() {
-      el.innerHTML = '<p class="ps-err">Unable to load data. Please try again.</p>';
+      document.getElementById("ps-results").innerHTML = '<p class="ps-err">Unable to load data. Please try again.</p>';
     });
+}
+
+function psShowSB(rows) {
+  var el = document.getElementById("ps-results");
+  var h = "";
+  for (var i = 0; i < rows.length; i++) {
+    var r = rows[i];
+    h += psCard({
+      address: r.address || '',
+      status: r.current_phase || '',
+      due_date: r.due_date || '',
+      notes: r.client_status || r.jake_status || ''
+    });
+  }
+  el.innerHTML = h;
 }
 
 function psShow(d) {
