@@ -155,7 +155,7 @@ function psLookup(e) {
   el.innerHTML = '<p style="text-align:center;color:#888;font-size:16px">Searching...</p>';
 
   // Try Supabase first (fast, has client-facing status)
-  fetch(SB_URL + "/rest/v1/projects?address=ilike.%25" + encodeURIComponent(s) + "%25&current_phase=neq.&select=proj_no,address,current_phase,due_date,client_status,jake_status", {
+  fetch(SB_URL + "/rest/v1/projects?address=ilike.%25" + encodeURIComponent(s) + "%25&current_phase=neq.&select=proj_no,address,current_phase,due_date,client_status,jake_status,file_links", {
     headers: { "apikey": SB_KEY, "Authorization": "Bearer " + SB_KEY }
   })
     .then(function(r) { return r.json(); })
@@ -192,7 +192,8 @@ function psShowSB(rows) {
       address: r.address || '',
       status: r.current_phase || '',
       due_date: r.due_date || '',
-      notes: r.client_status || r.jake_status || ''
+      notes: r.client_status || r.jake_status || '',
+      files: r.file_links || []
     });
   }
   el.innerHTML = h;
