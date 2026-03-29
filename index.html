@@ -129,20 +129,30 @@ var SB_URL = "https://kwcoqoizrwqxpfrkwkfv.supabase.co";
 var SB_KEY = "sb_publishable_-cH1zcGpj-JJ_zd0_gSf9A_vOpqgBmn";
 // Fallback to Apps Script if Supabase doesn't have client_status yet
 var PS_API = "https://script.google.com/macros/s/AKfycbyYmK__PccJooJcQkIK8BzJIfBkuAQ42Rd5hsaeM7btd4no4oGUnCHFA5TJog6Qmq9J/exec";
-var PH = ["In Design","Client Review","Const. Docs","Submitted","Plancheck","Backcheck","Resubmitted","Approved","Construction","Complete"];
-var SH = ["In Design","Client Review","Const. Docs.","Submitted","In Plancheck","Backcheck","Resubmitted","Approved","Construction","Complete"];
+// Display phases for the timeline (what clients see)
+var DISPLAY = ["In Design","Client Review","Const. Docs.","Submitted","Backcheck","Resubmitted","Approved","Construction","Revision","Complete"];
 var TIPS = [
   "Your project is being designed and drafted by our team.",
-  "Plans have been sent to you for review, comments, or approval.",
+  "Plans have been sent to you for review and approval.",
   "Design is approved — we're preparing final construction documents.",
-  "Plans have been submitted to the city for plan check review.",
-  "The city has returned comments or corrections for us to address.",
-  "Revised plans have been resubmitted to the city for re-review.",
-  "Plans are approved by the city — permit is ready or issued.",
+  "Plans have been submitted to the city for review. Most cities take 2–4 weeks to complete their review.",
+  "The city has returned comments for us to address.",
+  "Revised plans have been resubmitted to the city. Most cities take 2–4 weeks to complete their review.",
+  "Great news — your plans are approved and the permit is ready!",
   "Project is under construction with approved plans.",
   "Post-approval revisions are being processed.",
   "Project is complete — all approvals and inspections are finalized."
 ];
+// Map spreadsheet phases to display timeline index
+function phaseToIdx(status) {
+  var map = {
+    "In Design": 0, "Client Review": 1, "Const. Docs": 2,
+    "Submitted": 3, "Plancheck": 3,
+    "Backcheck": 4, "Resubmitted": 5, "Approved": 6,
+    "Construction": 7, "Revision": 8, "Complete": 9
+  };
+  return (status in map) ? map[status] : 0;
+}
 
 function psLookup(e) {
   e.preventDefault();
@@ -209,9 +219,8 @@ function psShow(d) {
 }
 
 function psCard(p) {
-  var idx = PH.indexOf(p.status);
-  if (idx < 0) idx = 0;
-  var displayStatus = SH[idx] || p.status;
+  var idx = phaseToIdx(p.status);
+  var displayStatus = DISPLAY[idx] || p.status;
 
   var bc = "#2c5f8a", bg = "#e8f4fd";
   if (p.status === "Approved" || p.status === "Construction") { bc = "#27763a"; bg = "#e8f8e8"; }
@@ -228,7 +237,11 @@ function psCard(p) {
   h += '<div class="ps-addr">' + psEsc(p.address) + '</div>';
   h += '<div class="ps-phase-group"><span class="ps-phase-label">Phase</span>';
   h += '<span class="ps-badge" style="background:' + bg + ';color:' + bc + '">' + psEsc(displayStatus) + '</span></div></div>';
-  if (due) h += '<div class="ps-due"><strong>Estimated next milestone: ' + psEsc(due) + '</strong></div>';
+  if (due) {
+    h += '<div class="ps-due"><strong>Estimated next milestone: ' + psEsc(due) + '</strong></div>';
+  } else if (p.status === "Submitted" || p.status === "Plancheck" || p.status === "Resubmitted") {
+    h += '<div class="ps-due"><em>Most cities take 2–4 weeks to complete their review.</em></div>';
+  }
   if (p.notes) h += '<div class="ps-status-row">STATUS:</div><div class="ps-notes">' + psEsc(p.notes) + '</div>';
   if (p.files && p.files.length > 0) {
     h += '<div class="ps-files"><div class="ps-files-header">Documents</div><div class="ps-file-list">';
@@ -236,7 +249,7 @@ function psCard(p) {
       var file = p.files[f];
       var label = file.name.replace(/\.pdf$/i, '').replace(/^\d+-\d+\s*/, '');
       if (!label) label = file.name;
-      h += '<a class="ps-file-btn" href="' + PS_API + '?action=download&fileId=' + file.id + '" target="_blank">';
+      h += '<a class="ps-file-btn" href="' + psEsc(file.url) + '" target="_blank">';
       h += '<svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zM14 3.5L18.5 8H14V3.5zM6 20V4h7v5h5v11H6z"/></svg>';
       h += psEsc(label);
       if (file.size) h += ' <span class="ps-file-size">(' + file.size + ' KB)</span>';
@@ -245,16 +258,16 @@ function psCard(p) {
     h += '</div></div>';
   }
   h += '<div class="ps-timeline">';
-  for (var i = 0; i < PH.length; i++) {
+  for (var i = 0; i < DISPLAY.length; i++) {
     var cls = "ps-step";
     if (i < idx) cls += " done";
     if (i === idx) cls += " active";
-    if (i === PH.length - 1) cls += " complete-phase";
+    if (i === DISPLAY.length - 1) cls += " complete-phase";
     h += '<div class="' + cls + '">';
     h += '<div class="ps-connector"></div>';
     h += '<div class="ps-tooltip">' + TIPS[i] + '</div>';
     h += '<div class="ps-dot"></div>';
-    h += '<div class="ps-step-label">' + SH[i] + '</div>';
+    h += '<div class="ps-step-label">' + DISPLAY[i] + '</div>';
     h += '</div>';
   }
   h += '</div></div>';
