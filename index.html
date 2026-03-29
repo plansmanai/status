@@ -93,6 +93,22 @@ body { font-family: "Helvetica Neue", Arial, sans-serif; color: #2c3e50; backgro
   border-top-color: #1a1a2e;
 }
 .ps-step:hover .ps-tooltip { display: block; }
+.ps-files { margin-top: 16px; }
+.ps-files-header {
+  font-size: 11px; font-weight: 600; color: #999; text-transform: uppercase;
+  letter-spacing: 0.5px; margin-bottom: 8px;
+}
+.ps-file-list { display: flex; flex-wrap: wrap; gap: 8px; }
+.ps-file-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 16px; background: #f0f4f8; border: 1px solid #d0d8e0;
+  border-radius: 8px; font-size: 13px; font-weight: 600; color: #2c5f8a;
+  cursor: pointer; text-decoration: none; font-family: inherit;
+  transition: background 0.2s;
+}
+.ps-file-btn:hover { background: #e0e8f0; }
+.ps-file-btn svg { width: 16px; height: 16px; fill: #2c5f8a; }
+.ps-file-size { font-weight: 400; color: #999; font-size: 11px; }
 .ps-ftr { text-align: center; font-size: 12px; color: #bbb; margin-top: 28px; }
 </style>
 </head>
@@ -108,7 +124,7 @@ body { font-family: "Helvetica Neue", Arial, sans-serif; color: #2c3e50; backgro
 </div>
 
 <script>
-var PS_API = "https://script.google.com/macros/s/AKfycbyiWjEZqhWdcNMSSDuPYbIIdMICflFM-3hpZWfI1ATizpZ0M7hzVS_ilI9Pbm-f-hLx/exec";
+var PS_API = "https://script.google.com/macros/s/AKfycbyYmK__PccJooJcQkIK8BzJIfBkuAQ42Rd5hsaeM7btd4no4oGUnCHFA5TJog6Qmq9J/exec";
 var PH = ["In Design","Client Review","Const. Docs","Submitted","Plancheck","Backcheck","Resubmitted","Approved","Construction","Complete"];
 var SH = ["In Design","Client Review","Const. Docs.","Submitted","In Plancheck","Backcheck","Resubmitted","Approved","Construction","Complete"];
 var TIPS = [
@@ -172,6 +188,20 @@ function psCard(p) {
   h += '<span class="ps-badge" style="background:' + bg + ';color:' + bc + '">' + psEsc(displayStatus) + '</span></div></div>';
   if (due) h += '<div class="ps-due"><strong>Estimated next milestone: ' + psEsc(due) + '</strong></div>';
   if (p.notes) h += '<div class="ps-status-row">STATUS:</div><div class="ps-notes">' + psEsc(p.notes) + '</div>';
+  if (p.files && p.files.length > 0) {
+    h += '<div class="ps-files"><div class="ps-files-header">Documents</div><div class="ps-file-list">';
+    for (var f = 0; f < p.files.length; f++) {
+      var file = p.files[f];
+      var label = file.name.replace(/\.pdf$/i, '').replace(/^\d+-\d+\s*/, '');
+      if (!label) label = file.name;
+      h += '<a class="ps-file-btn" href="' + PS_API + '?action=download&fileId=' + file.id + '" target="_blank">';
+      h += '<svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zM14 3.5L18.5 8H14V3.5zM6 20V4h7v5h5v11H6z"/></svg>';
+      h += psEsc(label);
+      if (file.size) h += ' <span class="ps-file-size">(' + file.size + ' KB)</span>';
+      h += '</a>';
+    }
+    h += '</div></div>';
+  }
   h += '<div class="ps-timeline">';
   for (var i = 0; i < PH.length; i++) {
     var cls = "ps-step";
