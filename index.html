@@ -133,9 +133,9 @@ var TIPS = [
   "Your project is being designed and drafted by our team.",
   "Plans have been sent to you for review and approval.",
   "Design is approved — we're preparing final construction documents.",
-  "Plans have been submitted to the city for review. Most cities take 2–4 weeks to complete their review.",
+  "Plans have been submitted to the city for review. Most cities take 3–4 weeks to complete their review.",
   "The city has returned comments for us to address.",
-  "Revised plans have been resubmitted to the city. Most cities take 2–4 weeks to complete their review.",
+  "Revised plans have been resubmitted to the city. Most cities take 3–4 weeks to complete their review.",
   "Great news — your plans are approved and the permit is ready!",
   "Project is under construction with approved plans.",
   "Post-approval revisions are being processed.",
@@ -238,7 +238,7 @@ function psCard(p) {
   if (due) {
     h += '<div class="ps-due"><strong>Estimated next milestone: ' + psEsc(due) + '</strong></div>';
   } else if (p.status === "Submitted" || p.status === "Plancheck" || p.status === "Resubmitted") {
-    h += '<div class="ps-due"><em>Most cities take 2–4 weeks to complete their review.</em></div>';
+    h += '<div class="ps-due"><em>Most cities take 3–4 weeks to complete their review.</em></div>';
   }
   if (p.notes) h += '<div class="ps-status-row">STATUS:</div><div class="ps-notes">' + psEsc(p.notes) + '</div>';
   h += '<div class="ps-timeline">';
