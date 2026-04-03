@@ -18,9 +18,10 @@ body { font-family: "Helvetica Neue", Arial, sans-serif; color: #2c3e50; backgro
 .ps-srch button {
   padding: 14px 28px; font-size: 17px; font-weight: 600;
   background: #2c5f8a; color: #fff; border: none; border-radius: 8px;
-  cursor: pointer; font-family: inherit;
+  cursor: pointer; font-family: inherit; white-space: nowrap;
 }
 .ps-srch button:hover { background: #1e4263; }
+.ps-srch button:disabled { background: #999; cursor: not-allowed; }
 .ps-err { text-align: center; color: #c0392b; padding: 24px; font-size: 17px; }
 .ps-card {
   background: #fff; border: 1px solid #e0e0e0; border-radius: 14px;
@@ -38,17 +39,14 @@ body { font-family: "Helvetica Neue", Arial, sans-serif; color: #2c3e50; backgro
   font-size: 16px; font-weight: 700; letter-spacing: 0.3px;
   border: 2px solid currentColor;
 }
-.ps-status-row { font-size: 15px; color: #555; margin-bottom: 6px; }
-.ps-status-row strong { color: #333; }
 .ps-due { font-size: 15px; color: #666; margin-bottom: 14px; }
 .ps-due strong { color: #333; }
+.ps-status-row { font-size: 15px; color: #555; margin-bottom: 6px; }
+.ps-status-row strong { color: #333; }
 .ps-notes {
   font-size: 15px; color: #555; line-height: 1.6;
   padding: 12px; background: #f8f9fa; border-radius: 8px; margin-bottom: 16px;
-}
-.ps-tl-header {
-  font-size: 11px; font-weight: 600; color: #999; text-transform: uppercase;
-  letter-spacing: 0.5px; margin-bottom: 10px; margin-top: 20px;
+  white-space: pre-line;
 }
 .ps-timeline { display: flex; align-items: flex-start; position: relative; }
 .ps-step { flex: 1; display: flex; flex-direction: column; align-items: center; position: relative; }
@@ -113,172 +111,195 @@ body { font-family: "Helvetica Neue", Arial, sans-serif; color: #2c3e50; backgro
 <body>
 <div class="ps-wrap">
   <p class="ps-sub">Enter your street name to check your project status</p>
-  <form class="ps-srch" onsubmit="psLookup(event)">
+  <form class="ps-srch" id="searchForm">
     <input type="text" id="ps-input" placeholder="e.g. Trojan, Sunfield, De Anza..." autofocus>
-    <button type="submit">Look Up</button>
+    <button type="submit" id="searchBtn">Look Up</button>
   </form>
   <div id="ps-results"></div>
   <div class="ps-ftr">Updated automatically &bull; Contact us at projects@plansman.com for questions</div>
 </div>
 
 <script>
-// Supabase config (anon key is safe for client-side — RLS protects the data)
-var SB_URL = "https://kwcoqoizrwqxpfrkwkfv.supabase.co";
-var SB_KEY = "sb_publishable_-cH1zcGpj-JJ_zd0_gSf9A_vOpqgBmn";
-// Fallback to Apps Script if Supabase doesn't have client_status yet
-var PS_API = "https://script.google.com/macros/s/AKfycbyYmK__PccJooJcQkIK8BzJIfBkuAQ42Rd5hsaeM7btd4no4oGUnCHFA5TJog6Qmq9J/exec";
-// Display phases for the timeline (what clients see)
-var DISPLAY = ["In Design","Client Review","Const. Docs.","Submitted","Backcheck","Resubmitted","Approved","Construction","Revision","Complete"];
-var TIPS = [
-  "Your project is being designed and drafted by our team.",
-  "Plans have been sent to you for review and approval.",
-  "Design is approved — we're preparing final construction documents.",
-  "Plans have been submitted to the city for review. Most cities take 3–4 weeks to complete their review.",
-  "The city has returned comments for us to address.",
-  "Revised plans have been resubmitted to the city. Most cities take 3–4 weeks to complete their review.",
-  "Great news — your plans are approved and the permit is ready!",
-  "Project is under construction with approved plans.",
-  "Post-approval revisions are being processed.",
-  "Project is complete — all approvals and inspections are finalized."
-];
-// Map spreadsheet phases to display timeline index
-function phaseToIdx(status) {
-  var map = {
-    "In Design": 0, "Client Review": 1, "Const. Docs": 2,
-    "Submitted": 3, "Plancheck": 3,
-    "Backcheck": 4, "Resubmitted": 5, "Approved": 6,
-    "Construction": 7, "Revision": 8, "Complete": 9
-  };
-  return (status in map) ? map[status] : 0;
-}
+(function() {
+  var SB_URL = "https://kwcoqoizrwqxpfrkwkfv.supabase.co/rest/v1";
+  var SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt3Y29xb2l6cndxeHBmcmt3a2Z2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ1NzQxMjAsImV4cCI6MjA5MDE1MDEyMH0.UY0OW4BnbG0SRhxrgDGibqyKHsXrN9j-JJzx2KSMQzk";
 
-function psLookup(e) {
-  e.preventDefault();
-  var s = document.getElementById("ps-input").value.trim().toLowerCase();
-  var el = document.getElementById("ps-results");
-  if (s.length < 3) {
-    el.innerHTML = '<p class="ps-err">Please enter at least 3 characters.</p>';
-    return;
-  }
-  el.innerHTML = '<p style="text-align:center;color:#888;font-size:16px">Searching...</p>';
+  var DISPLAY = ["In Design","Client Review","Const. Docs.","Submitted","Backcheck","Resubmitted","Approved","Construction","Revision","Complete"];
+  var TIPS = [
+    "Your project is being designed and drafted by our team.",
+    "Plans have been sent to you for review and approval.",
+    "Design is approved \u2014 we\u2019re preparing final construction documents.",
+    "Plans have been submitted to the city for review. Most cities take 3\u20134 weeks to complete their review.",
+    "The city has returned comments for us to address.",
+    "Revised plans have been resubmitted to the city. Most cities take 3\u20134 weeks to complete their review.",
+    "Great news \u2014 your plans are approved and the permit is ready!",
+    "Project is under construction with approved plans.",
+    "Post-approval revisions are being processed.",
+    "Project is complete \u2014 all approvals and inspections are finalized."
+  ];
 
-  // Try Supabase first (fast, has client-facing status)
-  fetch(SB_URL + "/rest/v1/projects?address=ilike.%25" + encodeURIComponent(s) + "%25&current_phase=neq.&select=proj_no,address,current_phase,due_date,client_status,jake_status,file_links", {
-    headers: { "apikey": SB_KEY, "Authorization": "Bearer " + SB_KEY }
-  })
-    .then(function(r) { return r.json(); })
-    .then(function(rows) {
-      if (rows && rows.length > 0) {
-        // Filter out completed/blank
-        var active = rows.filter(function(r) { return r.current_phase && r.current_phase !== "Complete"; });
-        if (active.length > 0) {
-          psShowSB(active);
-          return;
-        }
-      }
-      // Fallback to Apps Script
-      psFallback(s);
-    })
-    .catch(function() { psFallback(s); });
-}
-
-function psFallback(s) {
-  fetch(PS_API + "?street=" + encodeURIComponent(s), { redirect: "follow" })
-    .then(function(r) { return r.json(); })
-    .then(function(d) { psShow(d); })
-    .catch(function() {
-      document.getElementById("ps-results").innerHTML = '<p class="ps-err">Unable to load data. Please try again.</p>';
-    });
-}
-
-function psShowSB(rows) {
-  var el = document.getElementById("ps-results");
-  var h = "";
-  for (var i = 0; i < rows.length; i++) {
-    var r = rows[i];
-    h += psCard({
-      address: r.address || '',
-      status: r.current_phase || '',
-      due_date: r.due_date || '',
-      notes: r.client_status || r.jake_status || '',
-      files: r.file_links || []
-    });
-  }
-  el.innerHTML = h;
-}
-
-function psShow(d) {
-  var el = document.getElementById("ps-results");
-  if (d.error) { el.innerHTML = '<p class="ps-err">' + psEsc(d.error) + '</p>'; return; }
-  if (!d.projects || !d.projects.length) { el.innerHTML = '<p class="ps-err">No projects found.</p>'; return; }
-  var h = "";
-  for (var i = 0; i < d.projects.length; i++) h += psCard(d.projects[i]);
-  el.innerHTML = h;
-}
-
-function psCard(p) {
-  var idx = phaseToIdx(p.status);
-  var displayStatus = DISPLAY[idx] || p.status;
-
-  var bc = "#2c5f8a", bg = "#e8f4fd";
-  if (p.status === "Approved" || p.status === "Construction") { bc = "#27763a"; bg = "#e8f8e8"; }
-  if (p.status === "Client Review" || p.status === "Backcheck") { bc = "#b86e00"; bg = "#fff3e0"; }
-  if (p.status === "Complete") { bc = "#555"; bg = "#f0f0f0"; }
-
-  var due = (p.due_date || "").toString();
-  if (due.indexOf("GMT") !== -1) {
-    var dd = new Date(due);
-    if (!isNaN(dd)) due = (dd.getMonth()+1) + "/" + dd.getDate() + "/" + dd.getFullYear();
+  function phaseToIdx(status) {
+    var map = {
+      "In Design": 0, "Client Review": 1, "Const. Docs": 2,
+      "Submitted": 3, "Plancheck": 3,
+      "Backcheck": 4, "Resubmitted": 5, "Approved": 6,
+      "Construction": 7, "Revision": 8, "Complete": 9
+    };
+    return (status in map) ? map[status] : 0;
   }
 
-  var h = '<div class="ps-card"><div class="ps-card-top">';
-  h += '<div class="ps-addr">' + psEsc(p.address) + '</div>';
-  h += '<div class="ps-phase-group"><span class="ps-phase-label">Phase</span>';
-  h += '<span class="ps-badge" style="background:' + bg + ';color:' + bc + '">' + psEsc(displayStatus) + '</span></div></div>';
-  if (due) {
-    h += '<div class="ps-due"><strong>Estimated next milestone: ' + psEsc(due) + '</strong></div>';
-  } else if (p.status === "Submitted" || p.status === "Plancheck" || p.status === "Resubmitted") {
-    h += '<div class="ps-due"><em>Most cities take 3–4 weeks to complete their review.</em></div>';
+  // Support bookmarkable searches
+  var urlParams = new URLSearchParams(window.location.search);
+  var initStreet = (urlParams.get("street") || "").trim();
+  if (initStreet.length >= 3) {
+    document.getElementById("ps-input").value = initStreet;
+    doSearch(initStreet);
   }
-  if (p.notes) h += '<div class="ps-status-row">STATUS:</div><div class="ps-notes">' + psEsc(p.notes) + '</div>';
-  h += '<div class="ps-timeline">';
-  for (var i = 0; i < DISPLAY.length; i++) {
-    var cls = "ps-step";
-    if (i < idx) cls += " done";
-    if (i === idx) cls += " active";
-    if (i === DISPLAY.length - 1) cls += " complete-phase";
-    h += '<div class="' + cls + '">';
-    h += '<div class="ps-connector"></div>';
-    h += '<div class="ps-tooltip">' + TIPS[i] + '</div>';
-    h += '<div class="ps-dot"></div>';
-    h += '<div class="ps-step-label">' + DISPLAY[i] + '</div>';
-    h += '</div>';
-  }
-  h += '</div>';
-  if (p.files && p.files.length > 0) {
-    h += '<div class="ps-files"><div class="ps-files-label">DOCUMENTS:</div>';
-    h += '<div class="ps-files-hint">Click to download the latest documents</div><div class="ps-file-list">';
-    for (var f = 0; f < p.files.length; f++) {
-      var file = p.files[f];
-      var label = file.name.replace(/\.pdf$/i, '').replace(/^\d+-\d+\s*/, '');
-      if (!label) label = file.name;
-      h += '<a class="ps-file-btn" href="' + psEsc(file.url) + '" target="_blank">';
-      h += '<svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zM14 3.5L18.5 8H14V3.5zM6 20V4h7v5h5v11H6z"/></svg>';
-      h += psEsc(label);
-      if (file.size) h += ' <span class="ps-file-size">(' + file.size + ' KB)</span>';
-      h += '</a>';
+
+  document.getElementById("searchForm").addEventListener("submit", function(e) {
+    e.preventDefault();
+    var s = document.getElementById("ps-input").value.trim();
+    if (s.length < 3) {
+      document.getElementById("ps-results").innerHTML = '<p class="ps-err">Please enter at least 3 characters.</p>';
+      return;
     }
-    h += '</div></div>';
-  }
-  h += '</div>';
-  return h;
-}
+    doSearch(s);
+  });
 
-function psEsc(s) {
-  var d = document.createElement("div");
-  d.textContent = s || "";
-  return d.innerHTML;
-}
+  function doSearch(street) {
+    var btn = document.getElementById("searchBtn");
+    var el = document.getElementById("ps-results");
+    btn.disabled = true;
+    btn.textContent = "Searching...";
+    el.innerHTML = '<p style="text-align:center;color:#888;font-size:16px">Searching...</p>';
+
+    var url = SB_URL + "/projects?address=ilike.*" + encodeURIComponent(street) + "*&select=address,current_phase,due_date,client_status,client_due_date,file_links";
+
+    fetch(url, {
+      method: "GET",
+      headers: {
+        "apikey": SB_KEY,
+        "Authorization": "Bearer " + SB_KEY
+      }
+    })
+    .then(function(resp) {
+      if (!resp.ok) throw new Error("Search failed (HTTP " + resp.status + ")");
+      return resp.json();
+    })
+    .then(function(data) {
+      btn.disabled = false;
+      btn.textContent = "Look Up";
+
+      if (!data || !data.length) {
+        el.innerHTML = '<p class="ps-err">No active projects found for that street name.</p>';
+        return;
+      }
+
+      var active = [];
+      for (var i = 0; i < data.length; i++) {
+        var phase = (data[i].current_phase || "").trim();
+        if (!phase || phase === "Complete" || phase === "Cancelled") continue;
+
+        var fileLinks = data[i].file_links || [];
+        if (typeof fileLinks === "string") {
+          try { fileLinks = JSON.parse(fileLinks); } catch(e) { fileLinks = []; }
+        }
+
+        active.push({
+          address: data[i].address || "",
+          status: phase,
+          due_date: data[i].client_due_date || data[i].due_date || "",
+          notes: data[i].client_status || "",
+          files: fileLinks
+        });
+      }
+
+      if (active.length === 0) {
+        el.innerHTML = '<p class="ps-err">No active projects found for that street name.</p>';
+        return;
+      }
+
+      var h = "";
+      for (var i = 0; i < active.length; i++) h += psCard(active[i]);
+      el.innerHTML = h;
+    })
+    .catch(function(err) {
+      btn.disabled = false;
+      btn.textContent = "Look Up";
+      el.innerHTML = '<p class="ps-err">Unable to load data. Please try again.</p>';
+      console.error("Search error:", err);
+    });
+  }
+
+  function psCard(p) {
+    var idx = phaseToIdx(p.status);
+    var displayStatus = DISPLAY[idx] || p.status;
+
+    var bc = "#2c5f8a", bg = "#e8f4fd";
+    if (p.status === "Approved" || p.status === "Construction") { bc = "#27763a"; bg = "#e8f8e8"; }
+    if (p.status === "Client Review" || p.status === "Backcheck") { bc = "#b86e00"; bg = "#fff3e0"; }
+
+    var due = (p.due_date || "").toString();
+    if (due.indexOf("GMT") !== -1) {
+      var dd = new Date(due);
+      if (!isNaN(dd)) due = (dd.getMonth()+1) + "/" + dd.getDate() + "/" + dd.getFullYear();
+    }
+
+    var h = '<div class="ps-card"><div class="ps-card-top">';
+    h += '<div class="ps-addr">' + psEsc(p.address) + '</div>';
+    h += '<div class="ps-phase-group"><span class="ps-phase-label">Phase</span>';
+    h += '<span class="ps-badge" style="background:' + bg + ';color:' + bc + '">' + psEsc(displayStatus) + '</span></div></div>';
+    if (due) {
+      h += '<div class="ps-due"><strong>Estimated next milestone: ' + psEsc(due) + '</strong></div>';
+    } else if (p.status === "Submitted" || p.status === "Plancheck" || p.status === "Resubmitted") {
+      h += '<div class="ps-due"><em>Most cities take 3\u20134 weeks to complete their review.</em></div>';
+    }
+    if (p.notes) {
+      var cleanNotes = p.notes.replace(/^#{1,3}\s+/gm, "").replace(/\*\*/g, "").trim();
+      h += '<div class="ps-status-row">STATUS:</div><div class="ps-notes">' + psEsc(cleanNotes) + '</div>';
+    }
+
+    h += '<div class="ps-timeline">';
+    for (var i = 0; i < DISPLAY.length; i++) {
+      var cls = "ps-step";
+      if (i < idx) cls += " done";
+      if (i === idx) cls += " active";
+      if (i === DISPLAY.length - 1) cls += " complete-phase";
+      h += '<div class="' + cls + '">';
+      h += '<div class="ps-connector"></div>';
+      h += '<div class="ps-tooltip">' + TIPS[i] + '</div>';
+      h += '<div class="ps-dot"></div>';
+      h += '<div class="ps-step-label">' + DISPLAY[i] + '</div>';
+      h += '</div>';
+    }
+    h += '</div>';
+
+    if (p.files && p.files.length > 0) {
+      h += '<div class="ps-files"><div class="ps-files-label">DOCUMENTS:</div>';
+      h += '<div class="ps-files-hint">Click to download the latest documents</div><div class="ps-file-list">';
+      for (var f = 0; f < p.files.length; f++) {
+        var file = p.files[f];
+        var label = (file.name || "Document").replace(/\.pdf$/i, "").replace(/^\d+-\d+\s*/, "");
+        if (!label) label = file.name || "Document";
+        h += '<a class="ps-file-btn" href="' + psEsc(file.url) + '" target="_blank" rel="noopener">';
+        h += '<svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zM14 3.5L18.5 8H14V3.5zM6 20V4h7v5h5v11H6z"/></svg>';
+        h += psEsc(label);
+        if (file.size) h += ' <span class="ps-file-size">(' + file.size + ' KB)</span>';
+        h += '</a>';
+      }
+      h += '</div></div>';
+    }
+
+    h += '</div>';
+    return h;
+  }
+
+  function psEsc(s) {
+    var d = document.createElement("div");
+    d.textContent = s || "";
+    return d.innerHTML;
+  }
+})();
 </script>
 </body>
 </html>
