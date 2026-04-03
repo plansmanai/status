@@ -173,7 +173,7 @@ body { font-family: "Helvetica Neue", Arial, sans-serif; color: #2c3e50; backgro
     btn.textContent = "Searching...";
     el.innerHTML = '<p style="text-align:center;color:#888;font-size:16px">Searching...</p>';
 
-    var url = SB_URL + "/projects?address=ilike.*" + encodeURIComponent(street) + "*&select=address,current_phase,due_date,client_status,client_due_date,file_links";
+    var url = SB_URL + "/projects?address=ilike.*" + encodeURIComponent(street) + "*&select=address,current_phase,due_date,client_status,client_due_date,jake_status,file_links";
 
     fetch(url, {
       method: "GET",
@@ -209,7 +209,7 @@ body { font-family: "Helvetica Neue", Arial, sans-serif; color: #2c3e50; backgro
           address: data[i].address || "",
           status: phase,
           due_date: data[i].client_due_date || data[i].due_date || "",
-          notes: data[i].client_status || "",
+          notes: data[i].client_status || data[i].jake_status || "",
           files: fileLinks
         });
       }
