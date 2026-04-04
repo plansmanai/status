@@ -279,7 +279,7 @@ body { font-family: "Helvetica Neue", Arial, sans-serif; color: #2c3e50; backgro
       h += '<div class="ps-files-hint">Click to download the latest documents</div><div class="ps-file-list">';
       for (var f = 0; f < p.files.length; f++) {
         var file = p.files[f];
-        var label = (file.name || "Document").replace(/\.pdf$/i, "").replace(/^\d+-\d+\s*/, "");
+        var label = (file.name || "Document").replace(/\.pdf$/i, "");
         if (!label) label = file.name || "Document";
         h += '<a class="ps-file-btn" href="' + psEsc(file.url) + '" target="_blank" rel="noopener">';
         h += '<svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zM14 3.5L18.5 8H14V3.5zM6 20V4h7v5h5v11H6z"/></svg>';
