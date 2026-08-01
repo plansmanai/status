@@ -31,21 +31,39 @@ body { font-family: "Helvetica Neue", Arial, sans-serif; color: #2c3e50; backgro
   display: flex; justify-content: space-between; align-items: center;
   margin-bottom: 14px; flex-wrap: wrap; gap: 10px;
 }
-.ps-addr { font-size: 20px; font-weight: 700; color: #1a1a2e; }
-.ps-phase-group { display: flex; align-items: center; gap: 8px; }
-.ps-phase-label { font-size: 13px; font-weight: 700; color: #777; text-transform: uppercase; letter-spacing: 0.5px; }
-.ps-phase-desc { font-size: 14px; color: #555; margin: 6px 0 2px; font-style: italic; }
-.ps-latest { margin-top: 18px; border-top: 1px solid #eee; padding-top: 12px; }
-.ps-latest-item { display: flex; gap: 10px; align-items: baseline; margin: 8px 0; }
-.ps-latest-date { flex: 0 0 auto; font-size: 12px; font-weight: 700; color: #2c5f8a; }
-.ps-latest-msg { font-size: 14px; color: #444; line-height: 1.45; }
-.ps-badge {
-  display: inline-block; padding: 8px 20px; border-radius: 22px;
-  font-size: 16px; font-weight: 700; letter-spacing: 0.3px;
-  border: 2px solid currentColor;
+.ps-addr { font-size: 20px; font-weight: 700; color: #1a1a2e; margin-bottom: 14px; }
+
+/* ── Phase panel: one light bubble holds badge + date chip + meaning ── */
+.ps-phase-panel {
+  background: #f6f8fb; border: 1px solid #e6eaf0; border-radius: 12px;
+  padding: 14px 16px; margin-bottom: 20px;
 }
-.ps-due { font-size: 15px; color: #666; margin-bottom: 14px; }
-.ps-due strong { color: #333; }
+.ps-phase-row { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
+.ps-phase-label { font-size: 12px; font-weight: 700; color: #6b7683; text-transform: uppercase; letter-spacing: 0.6px; }
+.ps-badge {
+  display: inline-block; padding: 6px 18px; border-radius: 20px;
+  font-size: 15px; font-weight: 700; letter-spacing: 0.3px;
+}
+.ps-due-chip {
+  display: inline-block; padding: 6px 14px; border-radius: 20px;
+  font-size: 13px; font-weight: 500; line-height: 1.35;
+}
+.ps-due-chip strong { font-weight: 700; }
+.ps-phase-desc { font-size: 14px; color: #4a5560; line-height: 1.5; margin-top: 10px; }
+
+/* ── WHAT'S THE LATEST panel: blue bars = live, updating content ── */
+.ps-latest-panel {
+  background: #f2f7fc; border: 1px solid #dbe7f3; border-radius: 12px;
+  padding: 14px 16px; margin-top: 20px;
+}
+.ps-panel-label { font-size: 12px; font-weight: 700; color: #2c5f8a; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 10px; }
+.ps-latest-bar {
+  display: flex; gap: 12px; align-items: baseline;
+  background: #e4eef8; border-left: 3px solid #2c5f8a; border-radius: 8px;
+  padding: 10px 14px; margin: 8px 0;
+}
+.ps-latest-date { flex: 0 0 auto; font-size: 12px; font-weight: 700; color: #2c5f8a; }
+.ps-latest-msg { font-size: 14px; color: #37414b; line-height: 1.5; }
 .ps-status-row { font-size: 15px; color: #555; margin-bottom: 6px; }
 .ps-status-row strong { color: #333; }
 .ps-notes {
@@ -53,7 +71,7 @@ body { font-family: "Helvetica Neue", Arial, sans-serif; color: #2c3e50; backgro
   padding: 12px; background: #f8f9fa; border-radius: 8px; margin-bottom: 16px;
   white-space: pre-line;
 }
-.ps-timeline { display: flex; align-items: flex-start; position: relative; }
+.ps-timeline { display: flex; align-items: flex-start; position: relative; margin: 4px 2px 2px; }
 .ps-step { flex: 1; display: flex; flex-direction: column; align-items: center; position: relative; }
 .ps-dot {
   width: 16px; height: 16px; border-radius: 50%; border: 2px solid #ddd;
@@ -293,23 +311,30 @@ body { font-family: "Helvetica Neue", Arial, sans-serif; color: #2c3e50; backgro
     if (p.status === "Approved" || p.status === "Construction") { bc = "#27763a"; bg = "#e8f8e8"; }
     if (p.status === "Client Review" || p.status === "Backcheck") { bc = "#b86e00"; bg = "#fff3e0"; }
 
-    var h = '<div class="ps-card"><div class="ps-card-top">';
+    var h = '<div class="ps-card">';
     h += '<div class="ps-addr">' + psEsc(p.address) + '</div>';
-    h += '<div class="ps-phase-group"><span class="ps-phase-label">Phase</span>';
-    h += '<span class="ps-badge" style="background:' + bg + ';color:' + bc + '">' + psEsc(displayStatus) + '</span></div></div>';
-    // Phase-specific expectation + date, right by the phase bubble
+
+    // \u2500\u2500 Phase panel: everything about WHERE THE PROJECT IS lives in one
+    // light bubble \u2014 PHASE label + badge + the dated expectation chip (same
+    // color family as the badge), description below in the body font.
+    h += '<div class="ps-phase-panel">';
+    h += '<div class="ps-phase-row">';
+    h += '<span class="ps-phase-label">Phase:</span>';
+    h += '<span class="ps-badge" style="background:' + bg + ';color:' + bc + ';border:1.5px solid ' + bc + '">' + psEsc(displayStatus) + '</span>';
     var dl = DUE_LINES[p.status];
     if (dl) {
       var due = fmtDate(p.due_date);
       if (dl[1] && due) {
-        h += '<div class="ps-due"><strong>' + dl[0] + ': ' + psEsc(due) + '</strong></div>';
+        h += '<span class="ps-due-chip" style="background:' + bg + ';color:' + bc + '">' + dl[0] + ': <strong>' + psEsc(due) + '</strong></span>';
       } else if (!dl[1]) {
-        h += '<div class="ps-due"><strong>' + dl[0] + '</strong></div>';
+        h += '<span class="ps-due-chip" style="background:' + bg + ';color:' + bc + '">' + dl[0] + '</span>';
       }
     }
+    h += '</div>';
     // What this phase MEANS, always visible (the timeline tooltips are
     // hover-only \u2014 phone users never saw them and phase names alone confused).
     h += '<div class="ps-phase-desc">' + TIPS[idx] + '</div>';
+    h += '</div>';
 
     h += '<div class="ps-timeline">';
     for (var i = 0; i < DISPLAY.length; i++) {
@@ -326,15 +351,16 @@ body { font-family: "Helvetica Neue", Arial, sans-serif; color: #2c3e50; backgro
     }
     h += '</div>';
 
-    // ── WHAT'S THE LATEST — dated update history (newest first) ──
+    // ── WHAT'S THE LATEST panel — dated update history (newest first),
+    // each entry a blue bar so the live/updated area reads at a glance.
     var feed = (p.updates && p.updates.length) ? p.updates
              : (p.notes ? [{message: p.notes, created_at: p.updated_at}] : []);
     if (feed.length) {
-      h += '<div class="ps-latest"><div class="ps-status-row">WHAT\'S THE LATEST</div>';
+      h += '<div class="ps-latest-panel"><div class="ps-panel-label">WHAT\'S THE LATEST</div>';
       for (var u = 0; u < feed.length && u < 3; u++) {
         var msg = (feed[u].message || "").replace(/^#{1,3}\s+/gm, "").replace(/\*\*/g, "").trim();
         var d = fmtDate(feed[u].created_at);
-        h += '<div class="ps-latest-item">';
+        h += '<div class="ps-latest-bar">';
         if (d) h += '<span class="ps-latest-date">' + psEsc(d) + '</span>';
         h += '<span class="ps-latest-msg">' + psEsc(msg) + '</span></div>';
       }
