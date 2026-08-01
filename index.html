@@ -357,7 +357,7 @@ body { font-family: "Helvetica Neue", Arial, sans-serif; color: #2c3e50; backgro
     var feed = (p.updates && p.updates.length) ? p.updates
              : (p.notes ? [{message: p.notes, created_at: p.updated_at}] : []);
     if (feed.length) {
-      h += '<div class="ps-sec ps-sec-div"><div class="ps-sec-label">Latest:</div>';
+      h += '<div class="ps-sec ps-sec-div"><div class="ps-sec-label">What\'s the Latest:</div>';
       for (var u = 0; u < feed.length && u < 3; u++) {
         var msg = (feed[u].message || "").replace(/^#{1,3}\s+/gm, "").replace(/\*\*/g, "").trim();
         var d = fmtDate(feed[u].created_at);
