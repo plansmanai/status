@@ -8,7 +8,7 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: "Helvetica Neue", Arial, sans-serif; color: #2c3e50; background: transparent; }
 .ps-wrap { max-width: 800px; margin: 0 auto; padding: 24px; }
-.ps-sub { text-align: center; color: #888; font-size: 16px; margin-bottom: 28px; }
+.ps-sub { text-align: center; color: #2c5f8a; font-size: 17px; margin-bottom: 28px; }
 .ps-srch { display: flex; gap: 10px; margin-bottom: 28px; }
 .ps-srch input {
   flex: 1; padding: 14px 16px; font-size: 18px;
@@ -33,20 +33,28 @@ body { font-family: "Helvetica Neue", Arial, sans-serif; color: #2c3e50; backgro
 }
 .ps-addr { font-size: 20px; font-weight: 700; color: #1a1a2e; margin-bottom: 14px; }
 
-/* ── Flat sections: PHASE / LATEST / DOCUMENTS, split by divider lines ── */
-.ps-sec-label { font-size: 12px; font-weight: 700; color: #8a94a0; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 10px; }
-.ps-sec-div { border-top: 1px solid #ececec; margin-top: 18px; padding-top: 16px; }
+/* ── Flat sections: PHASE / LATEST / DOCUMENTS, split by divider lines.
+   Blue = the file-button blue (#2c5f8a) per Lance's markup. ── */
+.ps-sec-label { font-size: 13px; font-weight: 700; color: #2c5f8a; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 10px; }
+.ps-sec-div { border-top: 1px solid #d9e2ec; margin-top: 20px; padding-top: 16px; }
 .ps-phase-row { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; }
 .ps-badge {
   display: inline-block; padding: 6px 18px; border-radius: 20px;
-  font-size: 15px; font-weight: 700; letter-spacing: 0.3px;
+  font-size: 16px; font-weight: 700; letter-spacing: 0.3px;
 }
-.ps-due-line { font-size: 14px; color: #333; line-height: 1.4; }
-.ps-due-line strong { font-weight: 700; }
-.ps-phase-desc { font-size: 14px; color: #555; line-height: 1.5; margin: 10px 0 14px; }
-.ps-latest-item { display: flex; gap: 12px; align-items: baseline; margin: 7px 0; }
-.ps-latest-date { flex: 0 0 auto; font-size: 12px; font-weight: 700; color: #2c5f8a; }
-.ps-latest-msg { font-size: 14px; color: #444; line-height: 1.5; }
+.ps-due-chip {
+  display: inline-block; padding: 7px 16px; border-radius: 20px;
+  font-size: 15px; font-weight: 500; line-height: 1.35;
+}
+.ps-due-chip strong { font-weight: 700; }
+.ps-phase-desc { font-size: 15px; color: #444; line-height: 1.5; margin: 10px 0 14px; }
+.ps-latest-item {
+  display: flex; gap: 12px; align-items: baseline; margin: 8px 0;
+  background: #f0f4f8; border: 1px solid #d0d8e0; border-radius: 8px;
+  padding: 10px 14px;
+}
+.ps-latest-date { flex: 0 0 auto; font-size: 13px; font-weight: 700; color: #2c5f8a; }
+.ps-latest-msg { font-size: 15px; color: #2c5f8a; font-weight: 500; line-height: 1.5; }
 .ps-status-row { font-size: 15px; color: #555; margin-bottom: 6px; }
 .ps-status-row strong { color: #333; }
 .ps-notes {
@@ -109,7 +117,7 @@ body { font-family: "Helvetica Neue", Arial, sans-serif; color: #2c3e50; backgro
 .ps-file-btn:hover { background: #e0e8f0; }
 .ps-file-btn svg { width: 16px; height: 16px; fill: #2c5f8a; }
 .ps-file-size { font-weight: 400; color: #999; font-size: 11px; }
-.ps-ftr { text-align: center; font-size: 12px; color: #bbb; margin-top: 28px; }
+.ps-ftr { text-align: center; font-size: 17px; color: #2c5f8a; margin-top: 28px; }
 </style>
 </head>
 <body>
@@ -304,10 +312,13 @@ body { font-family: "Helvetica Neue", Arial, sans-serif; color: #2c3e50; backgro
     var dl = DUE_LINES[p.status];
     if (dl) {
       var due = fmtDate(p.due_date);
+      // Bubble in the PHASE'S color family (Lance's markup: "orange bubble"
+      // next to the Backcheck badge)
+      var chipStyle = 'background:' + bg + ';color:' + bc + ';border:1px solid ' + bc;
       if (dl[1] && due) {
-        h += '<span class="ps-due-line">' + dl[0] + ': <strong>' + psEsc(due) + '</strong></span>';
+        h += '<span class="ps-due-chip" style="' + chipStyle + '">' + dl[0] + ': <strong>' + psEsc(due) + '</strong></span>';
       } else if (!dl[1]) {
-        h += '<span class="ps-due-line">' + dl[0] + '</span>';
+        h += '<span class="ps-due-chip" style="' + chipStyle + '">' + dl[0] + '</span>';
       }
     }
     h += '</div>';
