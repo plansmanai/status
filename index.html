@@ -35,7 +35,7 @@ body { font-family: "Helvetica Neue", Arial, sans-serif; color: #2c3e50; backgro
 
 /* ── Flat sections: PHASE / LATEST / DOCUMENTS, split by divider lines.
    Blue = the file-button blue (#2c5f8a) per Lance's markup. ── */
-.ps-sec-label { font-size: 13px; font-weight: 700; color: #2c5f8a; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 10px; }
+.ps-sec-label { font-size: 15px; font-weight: 700; color: #1a1a2e; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 10px; }
 .ps-sec-div { border-top: 1px solid #d9e2ec; margin-top: 20px; padding-top: 16px; }
 .ps-phase-row { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; }
 .ps-badge {
@@ -47,7 +47,7 @@ body { font-family: "Helvetica Neue", Arial, sans-serif; color: #2c3e50; backgro
   font-size: 15px; font-weight: 500; line-height: 1.35;
 }
 .ps-due-chip strong { font-weight: 700; }
-.ps-phase-desc { font-size: 15px; color: #444; line-height: 1.5; margin: 10px 0 14px; }
+.ps-phase-desc-bar { margin: 12px 0 14px; }
 .ps-latest-item {
   display: flex; gap: 12px; align-items: baseline; margin: 8px 0;
   background: #f0f4f8; border: 1px solid #d0d8e0; border-radius: 8px;
@@ -236,24 +236,33 @@ body { font-family: "Helvetica Neue", Arial, sans-serif; color: #2c3e50; backgro
         return;
       }
 
-      // WHAT'S THE LATEST: dated update history (last 3 per project).
-      // Fetch is best-effort — cards render with the single current status
-      // if the feed isn't available.
+      // Two best-effort side fetches: the dated update history (last 3 per
+      // project) and the phase-change log (for "entered this phase on ___").
+      // Cards render fine without either.
       var projList = active.map(function(a){ return a.proj_no; })
                            .filter(Boolean).join(",");
-      fetch(SB_URL + "/client_updates?proj_no=in.(" + encodeURIComponent(projList) +
-            ")&select=proj_no,message,created_at&order=created_at.desc&limit=60", {
-        headers: { "apikey": SB_KEY, "Authorization": "Bearer " + SB_KEY }
-      })
-      .then(function(r){ return r.ok ? r.json() : []; })
-      .catch(function(){ return []; })
-      .then(function(ups) {
+      var hdrs = { "apikey": SB_KEY, "Authorization": "Bearer " + SB_KEY };
+      var updsReq = fetch(SB_URL + "/client_updates?proj_no=in.(" + encodeURIComponent(projList) +
+            ")&select=proj_no,message,created_at&order=created_at.desc&limit=60", { headers: hdrs })
+        .then(function(r){ return r.ok ? r.json() : []; }).catch(function(){ return []; });
+      var histReq = fetch(SB_URL + "/status_history?proj_no=in.(" + encodeURIComponent(projList) +
+            ")&select=proj_no,new_phase,created_at&order=created_at.desc&limit=300", { headers: hdrs })
+        .then(function(r){ return r.ok ? r.json() : []; }).catch(function(){ return []; });
+      Promise.all([updsReq, histReq]).then(function(res) {
+        var ups = res[0] || [], hist = res[1] || [];
         for (var i = 0; i < active.length; i++) {
           var mine = [];
-          for (var u = 0; u < (ups || []).length; u++) {
+          for (var u = 0; u < ups.length; u++) {
             if (ups[u].proj_no === active[i].proj_no && mine.length < 3) mine.push(ups[u]);
           }
           active[i].updates = mine;
+          for (var hh = 0; hh < hist.length; hh++) {
+            if (hist[hh].proj_no === active[i].proj_no &&
+                (hist[hh].new_phase || "").trim() === active[i].status) {
+              active[i].phase_date = fmtDate(hist[hh].created_at);
+              break;
+            }
+          }
         }
         var h = "";
         for (var i = 0; i < active.length; i++) h += psCard(active[i]);
@@ -306,7 +315,7 @@ body { font-family: "Helvetica Neue", Arial, sans-serif; color: #2c3e50; backgro
     // \u2500\u2500 PHASE section: label, badge + date on one line, meaning below,
     // then the timeline. Flat \u2014 sections separate by divider lines
     // (Lance 2026-07-31: "the big bubbles suck").
-    h += '<div class="ps-sec"><div class="ps-sec-label">Phase</div>';
+    h += '<div class="ps-sec"><div class="ps-sec-label">Phase:</div>';
     h += '<div class="ps-phase-row">';
     h += '<span class="ps-badge" style="background:' + bg + ';color:' + bc + ';border:1.5px solid ' + bc + '">' + psEsc(displayStatus) + '</span>';
     var dl = DUE_LINES[p.status];
@@ -322,9 +331,12 @@ body { font-family: "Helvetica Neue", Arial, sans-serif; color: #2c3e50; backgro
       }
     }
     h += '</div>';
-    // What this phase MEANS, always visible (the timeline tooltips are
-    // hover-only \u2014 phone users never saw them and phase names alone confused).
-    h += '<div class="ps-phase-desc">' + TIPS[idx] + '</div>';
+    // What this phase MEANS \u2014 same blue bubble as the LATEST entries, dated
+    // with when the project entered this phase (Lance's markup: "same blue
+    // bubble" + "add date").
+    h += '<div class="ps-latest-item ps-phase-desc-bar">';
+    if (p.phase_date) h += '<span class="ps-latest-date">' + psEsc(p.phase_date) + '</span>';
+    h += '<span class="ps-latest-msg">' + TIPS[idx] + '</span></div>';
 
     h += '<div class="ps-timeline">';
     for (var i = 0; i < DISPLAY.length; i++) {
@@ -345,7 +357,7 @@ body { font-family: "Helvetica Neue", Arial, sans-serif; color: #2c3e50; backgro
     var feed = (p.updates && p.updates.length) ? p.updates
              : (p.notes ? [{message: p.notes, created_at: p.updated_at}] : []);
     if (feed.length) {
-      h += '<div class="ps-sec ps-sec-div"><div class="ps-sec-label">Latest</div>';
+      h += '<div class="ps-sec ps-sec-div"><div class="ps-sec-label">Latest:</div>';
       for (var u = 0; u < feed.length && u < 3; u++) {
         var msg = (feed[u].message || "").replace(/^#{1,3}\s+/gm, "").replace(/\*\*/g, "").trim();
         var d = fmtDate(feed[u].created_at);
@@ -357,7 +369,7 @@ body { font-family: "Helvetica Neue", Arial, sans-serif; color: #2c3e50; backgro
     }
 
     if (p.files && p.files.length > 0) {
-      h += '<div class="ps-files ps-sec ps-sec-div"><div class="ps-sec-label">Documents</div>';
+      h += '<div class="ps-files ps-sec ps-sec-div"><div class="ps-sec-label">Documents:</div>';
       h += '<div class="ps-files-hint">Click to download the latest documents</div><div class="ps-file-list">';
       for (var f = 0; f < p.files.length; f++) {
         var file = p.files[f];
