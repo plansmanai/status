@@ -310,7 +310,7 @@ body { font-family: "Helvetica Neue", Arial, sans-serif; color: #2c3e50; backgro
     if (p.status === "Client Review" || p.status === "Backcheck") { bc = "#b86e00"; bg = "#fff3e0"; }
 
     var h = '<div class="ps-card">';
-    h += '<div class="ps-addr">' + psEsc(p.address) + '</div>';
+    h += '<div class="ps-addr">' + (p.proj_no ? '(' + psEsc(p.proj_no) + ') ' : '') + psEsc(p.address) + '</div>';
 
     // \u2500\u2500 PHASE section: label, badge + date on one line, meaning below,
     // then the timeline. Flat \u2014 sections separate by divider lines
