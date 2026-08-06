@@ -328,6 +328,10 @@ body { font-family: "Helvetica Neue", Arial, sans-serif; color: #2c3e50; backgro
         h += '<span class="ps-due-chip" style="' + chipStyle + '">' + dl[0] + ': <strong>' + psEsc(due) + '</strong></span>';
       } else if (!dl[1]) {
         h += '<span class="ps-due-chip" style="' + chipStyle + '">' + dl[0] + '</span>';
+      } else if (dl[1] && !due && /^usually/i.test(dl[0])) {
+        // City phases carry NO due date (cleared on submittal — Lance's
+        // rule); show the expectation without a dangling "date back is:"
+        h += '<span class="ps-due-chip" style="' + chipStyle + '">Usually about 3 weeks to review</span>';
       }
     }
     h += '</div>';
