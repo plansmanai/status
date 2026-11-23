@@ -135,8 +135,10 @@ body { font-family: "Helvetica Neue", Arial, sans-serif; color: #2c3e50; backgro
 
 <script>
 (function() {
-  var SB_URL = "https://kwcoqoizrwqxpfrkwkfv.supabase.co/rest/v1";
-  var SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt3Y29xb2l6cndxeHBmcmt3a2Z2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ1NzQxMjAsImV4cCI6MjA5MDE1MDEyMH0.UY0OW4BnbG0SRhxrgDGibqyKHsXrN9j-JJzx2KSMQzk";
+  // P4's database (plansman.ai). The public key only reaches client_status_lookup (P4 db/070), which returns
+  // number, address, phase and when the job entered it: never a note.
+  var SB_URL = "https://pinqkmfhartdpolgdnvj.supabase.co/rest/v1";
+  var SB_KEY = "sb_publishable_myK56aZrCk5PLTJLHMtp6Q_xDl-UNkV";
 
   var DISPLAY = ["In Design","Client Review","Const. Docs.","Submitted","Backcheck","Resubmitted","Approved","Construction","Revision","Complete"];
   var TIPS = [
@@ -187,14 +189,10 @@ body { font-family: "Helvetica Neue", Arial, sans-serif; color: #2c3e50; backgro
     btn.textContent = "Searching...";
     el.innerHTML = '<p style="text-align:center;color:#888;font-size:16px">Searching...</p>';
 
-    var url = SB_URL + "/projects?address=ilike.*" + encodeURIComponent(street) + "*&select=proj_no,address,current_phase,due_date,client_status,client_due_date,updated_at,file_links";
-
-    fetch(url, {
-      method: "GET",
-      headers: {
-        "apikey": SB_KEY,
-        "Authorization": "Bearer " + SB_KEY
-      }
+    fetch(SB_URL + "/rpc/client_status_lookup", {
+      method: "POST",
+      headers: { "apikey": SB_KEY, "Content-Type": "application/json" },
+      body: JSON.stringify({ p_street: street })
     })
     .then(function(resp) {
       if (!resp.ok) throw new Error("Search failed (HTTP " + resp.status + ")");
@@ -203,78 +201,26 @@ body { font-family: "Helvetica Neue", Arial, sans-serif; color: #2c3e50; backgro
     .then(function(data) {
       btn.disabled = false;
       btn.textContent = "Look Up";
-
       if (!data || !data.length) {
         el.innerHTML = '<p class="ps-err">No active projects found for that street name.</p>';
         return;
       }
-
-      var active = [];
+      var h = "";
       for (var i = 0; i < data.length; i++) {
-        var phase = (data[i].current_phase || "").trim();
-        if (!phase || phase === "Complete" || phase === "Cancelled") continue;
-
-        var fileLinks = data[i].file_links || [];
-        if (typeof fileLinks === "string") {
-          try { fileLinks = JSON.parse(fileLinks); } catch(e) { fileLinks = []; }
-        }
-
-        active.push({
+        h += psCard({
           proj_no: data[i].proj_no || "",
           address: data[i].address || "",
-          status: phase,
-          due_date: data[i].client_due_date || data[i].due_date || "",
-          // client_status ONLY — jake_status is internal shorthand and was
-          // confusing customers when it leaked here as a fallback.
-          notes: data[i].client_status || "",
-          updated_at: data[i].updated_at || "",
-          updates: null,
-          files: fileLinks
+          status: (data[i].phase || "").trim(),
+          phase_date: fmtDate(data[i].phase_since),
+          due_date: "", notes: "", updates: [], files: []
         });
       }
-
-      if (active.length === 0) {
-        el.innerHTML = '<p class="ps-err">No active projects found for that street name.</p>';
-        return;
-      }
-
-      // Two best-effort side fetches: the dated update history (last 3 per
-      // project) and the phase-change log (for "entered this phase on ___").
-      // Cards render fine without either.
-      var projList = active.map(function(a){ return a.proj_no; })
-                           .filter(Boolean).join(",");
-      var hdrs = { "apikey": SB_KEY, "Authorization": "Bearer " + SB_KEY };
-      var updsReq = fetch(SB_URL + "/client_updates?proj_no=in.(" + encodeURIComponent(projList) +
-            ")&select=proj_no,message,created_at&order=created_at.desc&limit=60", { headers: hdrs })
-        .then(function(r){ return r.ok ? r.json() : []; }).catch(function(){ return []; });
-      var histReq = fetch(SB_URL + "/status_history?proj_no=in.(" + encodeURIComponent(projList) +
-            ")&select=proj_no,new_phase,created_at&order=created_at.desc&limit=300", { headers: hdrs })
-        .then(function(r){ return r.ok ? r.json() : []; }).catch(function(){ return []; });
-      Promise.all([updsReq, histReq]).then(function(res) {
-        var ups = res[0] || [], hist = res[1] || [];
-        for (var i = 0; i < active.length; i++) {
-          var mine = [];
-          for (var u = 0; u < ups.length; u++) {
-            if (ups[u].proj_no === active[i].proj_no && mine.length < 3) mine.push(ups[u]);
-          }
-          active[i].updates = mine;
-          for (var hh = 0; hh < hist.length; hh++) {
-            if (hist[hh].proj_no === active[i].proj_no &&
-                (hist[hh].new_phase || "").trim() === active[i].status) {
-              active[i].phase_date = fmtDate(hist[hh].created_at);
-              break;
-            }
-          }
-        }
-        var h = "";
-        for (var i = 0; i < active.length; i++) h += psCard(active[i]);
-        el.innerHTML = h;
-      });
+      el.innerHTML = h;
     })
     .catch(function(err) {
       btn.disabled = false;
       btn.textContent = "Look Up";
-      el.innerHTML = '<p class="ps-err" style="color:#2c5f8a">Our online status lookup is being upgraded.<br>For the latest on your project, call <a href="tel:+19498006106" style="color:inherit">949.800.6106</a> or email <a href="mailto:projects@plansman.com" style="color:inherit">projects@plansman.com</a>.</p>';
+      el.innerHTML = '<p class="ps-err" style="color:#2c5f8a">We could not load project status just now.<br>For the latest on your project, call <a href="tel:+19498006106" style="color:inherit">949.800.6106</a> or email <a href="mailto:projects@plansman.com" style="color:inherit">projects@plansman.com</a>.</p>';
       console.error("Search error:", err);
     });
   }
