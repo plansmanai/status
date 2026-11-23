@@ -274,7 +274,7 @@ body { font-family: "Helvetica Neue", Arial, sans-serif; color: #2c3e50; backgro
     .catch(function(err) {
       btn.disabled = false;
       btn.textContent = "Look Up";
-      el.innerHTML = '<p class="ps-err">Unable to load data. Please try again.</p>';
+      el.innerHTML = '<p class="ps-err" style="color:#2c5f8a">Our online status lookup is being upgraded.<br>For the latest on your project, call <a href="tel:+19498006106" style="color:inherit">949.800.6106</a> or email <a href="mailto:projects@plansman.com" style="color:inherit">projects@plansman.com</a>.</p>';
       console.error("Search error:", err);
     });
   }
